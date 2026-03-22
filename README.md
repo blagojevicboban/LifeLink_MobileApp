@@ -21,6 +21,7 @@ LifeLink is a Flutter-based companion application designed to work seamlessly wi
   - **SMS**: Sends an urgent text message with precise GPS coordinates.
   - **SOS**: Triggers a system-wide SOS intent.
 - **Location Tracking**: Captures exact location using phone GPS to help responders find the user.
+- **Firebase Cloud Sync**: Automatically backs up health snapshots and fall events to the cloud for remote monitoring.
 
 ### 🎨 Modern UI/UX
 - **Dark Theme**: Battery-efficient, high-contrast dark interface optimized for visibility.
@@ -94,6 +95,7 @@ Access the **Settings** screen via the gear icon on the dashboard to configure:
 - **Fall Action**: Choose between Call, SMS, or SOS.
 - **Countdown Duration**: Set the buffer time before alerts are sent.
 - **Default Device**: Set a specific LifeLink device MAC address for auto-connection.
+- **Firebase Configuration**: Requires `google-services.json` in `android/app/` for cloud connectivity.
 
 ## 📱 Permissions
 The app requires the following permissions for full functionality:

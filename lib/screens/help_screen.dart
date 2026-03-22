@@ -31,39 +31,41 @@ class HelpScreen extends StatelessWidget {
           children: [
             _buildHeader(loc.get('user_manual')),
             const SizedBox(height: 24),
-            
             _buildSection(
               isSerbian ? "Dobrodošli" : "Welcome",
-              isSerbian 
-                ? "Dobrodošli u uputstvo za korišćenje vaše pametne narukvice LifeLink! Ova narukvica je vaš čuvar u sferama zdravlja i bezbednosti."
-                : "Welcome to the user guide for your LifeLink smart bracelet! This bracelet is your guardian for health and safety.",
+              isSerbian
+                  ? "Dobrodošli u uputstvo za korišćenje vaše pametne narukvice LifeLink! Ova narukvica je vaš čuvar u sferama zdravlja i bezbednosti."
+                  : "Welcome to the user guide for your LifeLink smart bracelet! This bracelet is your guardian for health and safety.",
               Icons.info_outline,
             ),
-            
             _buildSection(
               isSerbian ? "Kako vas LifeLink štiti?" : "How LifeLink Protects You",
               isSerbian
-                ? "Putem moćnih senzora, on stalno 'sluša' vaše srce, krvotok i svaku promenu u brzini kretanja. Sprečava lažne uzbune i garantuje pomoć kada je zaista potrebna."
-                : "Through powerful sensors, it constantly 'listens' to your heart, blood flow, and every change in speed. It prevents false alarms and guarantees help when truly needed.",
+                  ? "Putem moćnih senzora, on stalno 'sluša' vaše srce, krvotok i svaku promenu u brzini kretanja. Sprečava lažne uzbune i garantuje pomoć kada je zaista potrebna."
+                  : "Through powerful sensors, it constantly 'listens' to your heart, blood flow, and every change in speed. It prevents false alarms and guarantees help when truly needed.",
               Icons.security,
             ),
-            
             _buildSection(
               isSerbian ? "Osnovna Navigacija na satu" : "Basic Watch Navigation",
               isSerbian
-                ? "1. Glavni Ekran: Prikaz pulsa, kiseonika i statusa (GPS, GSM).\n2. Debug (Levo): Testiranje pada.\n3. Kontakti (Dole/Pored): Unos broja za hitne slučajeve."
-                : "1. Main Screen: Heart rate, SpO2, and status (GPS, GSM).\n2. Debug (Left): Fall simulation.\n3. Contacts (Down/Next): Emergency number input.",
+                  ? "1. Glavni Ekran: Prikaz pulsa, kiseonika i statusa (GPS, GSM).\n2. Debug (Levo): Testiranje pada.\n3. Kontakti (Dole/Pored): Unos broja za hitne slučajeve."
+                  : "1. Main Screen: Heart rate, SpO2, and status (GPS, GSM).\n2. Debug (Left): Fall simulation.\n3. Contacts (Down/Next): Emergency number input.",
               Icons.swipe,
             ),
-            
             _buildSection(
               isSerbian ? "Hitni Ekran (SOS)" : "Emergency Screen (SOS)",
               isSerbian
-                ? "Kada se detektuje pad, aktivira se crveni ekran sa odbrojavanjem od 15 sekundi. Ako ste dobro, prevucite prstom da otkažete. U suprotnom, šalje se poziv u pomoć."
-                : "When a fall is detected, a red screen with a 15-second countdown appears. If you're okay, swipe to cancel. Otherwise, a help request is sent.",
+                  ? "Kada se detektuje pad, aktivira se crveni ekran sa odbrojavanjem od 15 sekundi. Ako ste dobro, prevucite prstom da otkažete. U suprotnom, šalje se poziv u pomoć."
+                  : "When a fall is detected, a red screen with a 15-second countdown appears. If you're okay, swipe to cancel. Otherwise, a help request is sent.",
               Icons.warning_amber_rounded,
             ),
-
+            _buildSection(
+              isSerbian ? "Cloud Sinhronizacija" : "Cloud Sync",
+              isSerbian
+                  ? "Vaši podaci se automatski čuvaju u oblaku. Čak i ako niste pored telefona, sat može koristiti WiFi da pošalje informacije porodici u realnom vremenu."
+                  : "Your data is automatically saved in the cloud. Even if you are not near your phone, the watch can use WiFi to send real-time information to your family.",
+              Icons.cloud_sync,
+            ),
             const SizedBox(height: 40),
             Center(
               child: Text(

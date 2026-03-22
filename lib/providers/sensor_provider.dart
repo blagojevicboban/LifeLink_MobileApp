@@ -13,6 +13,7 @@ import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 
 import 'package:android_intent_plus/android_intent.dart';
 import '../services/ble_service.dart';
+import '../services/firebase_service.dart';
 
 enum AlertState { safe, warning, alarm }
 
@@ -74,6 +75,7 @@ class SensorProvider with ChangeNotifier {
   int _watchActionOrigin = 0; // 0: Watch Only, 1: App + Watch
 
   bool _isSyncingWatchSettings = false;
+  DateTime? _lastFirebaseSnapshot;
 
   AlertState get alertState => _alertState;
   String get rawMessage => _rawMessage;
@@ -146,6 +148,20 @@ class SensorProvider with ChangeNotifier {
 
       if (_isConnected) {
         stopScan();
+        // Register/update device on connect
+        if (connectedDeviceAddress != null) {
+          FirebaseService.registerDevice(
+            deviceId: connectedDeviceAddress!,
+            deviceName: connectedDeviceName,
+            battery: _batteryLevel,
+            isOnline: true,
+          );
+        }
+      } else {
+        // Update status on disconnect
+        if (_defaultDeviceAddress != null) {
+          FirebaseService.updateDeviceStatus(_defaultDeviceAddress!, false, _batteryLevel);
+        }
       }
 
       notifyListeners();
@@ -475,6 +491,20 @@ class SensorProvider with ChangeNotifier {
         _extractMetrics(msg);
       } else if (msg.startsWith("STATUS")) {
         _extractMetrics(msg);
+        _syncToFirebase();
+      }
+
+      // Always log falls to Firebase immediately
+      if (msg.startsWith("FALL_DETECTED") || msg.startsWith("FALL_ACCEPTED")) {
+        if (connectedDeviceAddress != null) {
+          FirebaseService.saveFallEvent(
+            deviceId: connectedDeviceAddress!,
+            location: _fallLocation,
+            gForce: _gForce,
+            pulse: _pulse,
+            spo2: _spo2,
+          );
+        }
       }
 
       if (_alertState != previousState) {
@@ -672,6 +702,29 @@ class SensorProvider with ChangeNotifier {
     } else if (Platform.isWindows) {
       // Open Windows Bluetooth settings
       await Process.run('start', ['ms-settings:bluetooth'], runInShell: true);
+    }
+  }
+
+  void _syncToFirebase() {
+    if (!_isConnected || connectedDeviceAddress == null) return;
+
+    // If watch has WiFi enabled, it should send its own snapshots.
+    // We only send from app if WiFi is disabled OR as a less frequent backup.
+    if (_watchWifiEnabled) return;
+
+    final now = DateTime.now();
+    if (_lastFirebaseSnapshot == null ||
+        now.difference(_lastFirebaseSnapshot!).inSeconds >= 30) {
+      _lastFirebaseSnapshot = now;
+      
+      FirebaseService.saveHealthSnapshot(
+        deviceId: connectedDeviceAddress!,
+        pulse: _pulse,
+        spo2: _spo2,
+        gForce: _gForce,
+        battery: _batteryLevel,
+        source: 'ble',
+      );
     }
   }
 
