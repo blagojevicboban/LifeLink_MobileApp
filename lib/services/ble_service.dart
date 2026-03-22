@@ -139,6 +139,27 @@ class BleService {
     });
   }
 
+  Future<List<int>?> readCharacteristic() async {
+    if (targetCharacteristic == null) return null;
+    try {
+      return await targetCharacteristic!.read();
+    } catch (e) {
+      print("Error reading characteristic: $e");
+      return null;
+    }
+  }
+
+  Future<bool> writeCharacteristic(List<int> data) async {
+    if (targetCharacteristic == null) return false;
+    try {
+      await targetCharacteristic!.write(data, withoutResponse: false);
+      return true;
+    } catch (e) {
+      print("Error writing characteristic: $e");
+      return false;
+    }
+  }
+
   void log(String message) {
     print(message);
   }

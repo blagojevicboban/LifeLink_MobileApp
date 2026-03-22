@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../providers/sensor_provider.dart';
 import '../core/app_theme.dart';
+import '../core/localization.dart';
+import 'watch_settings_screen.dart';
+import 'help_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,27 +15,23 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _numberController = TextEditingController();
+  late SensorProvider _provider;
 
   @override
   void initState() {
     super.initState();
-    final provider = Provider.of<SensorProvider>(context, listen: false);
-    _nameController.text = provider.emergencyContactName;
-    _numberController.text = provider.emergencyContactNumber;
+    _provider = Provider.of<SensorProvider>(context, listen: false);
 
-    // Start scanning when entering settings to show available devices
-    provider.startScan();
+    // Start scanning when entering settings after the first frame is drawn
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _provider.startScan();
+    });
   }
 
   @override
   void dispose() {
     // Stop scanning when leaving settings
-    final provider = Provider.of<SensorProvider>(context, listen: false);
-    provider.stopScan();
-    _nameController.dispose();
-    _numberController.dispose();
+    _provider.stopScan();
     super.dispose();
   }
 
@@ -45,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          "SETTINGS",
+          AppLocalizations.of(context)!.get('settings'),
           style: GoogleFonts.rajdhani(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -64,19 +62,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader("DEVICE CONNECTION"),
+                _buildSectionHeader(AppLocalizations.of(context)!.get('device_connection')),
                 const SizedBox(height: 16),
                 _buildDeviceSection(context, provider),
 
                 const SizedBox(height: 32),
-                _buildSectionHeader("SYSTEM PERMISSIONS"),
+                _buildSectionHeader(AppLocalizations.of(context)!.get('system_permissions')),
                 const SizedBox(height: 16),
                 _buildPermissionsSection(provider),
 
                 const SizedBox(height: 32),
-                _buildSectionHeader("SAFETY CONFIGURATION"),
+                _buildSectionHeader(AppLocalizations.of(context)!.get('safety_configuration')),
                 const SizedBox(height: 16),
                 _buildSafetySection(context, provider),
+
+                const SizedBox(height: 32),
+                _buildSectionHeader(AppLocalizations.of(context)!.get('help')),
+                const SizedBox(height: 16),
+                _buildHelpSection(context),
 
                 const SizedBox(height: 32),
                 Center(
@@ -87,6 +90,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white10,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.help_outline, color: Colors.white),
+        ),
+        title: Text(
+          AppLocalizations.of(context)!.get('user_manual'),
+          style: GoogleFonts.rajdhani(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HelpScreen()),
           );
         },
       ),
@@ -129,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      provider.isConnected ? "Connected" : "Disconnected",
+                      provider.isConnected ? AppLocalizations.of(context)!.get('connected') : AppLocalizations.of(context)!.get('disconnected'),
                       style: GoogleFonts.rajdhani(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -138,7 +176,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     if (provider.defaultDeviceAddress != null)
                       Text(
-                        "Default: ${provider.defaultDeviceAddress}",
+                        "${AppLocalizations.of(context)!.get('default_device')} ${provider.defaultDeviceAddress}",
                         style: GoogleFonts.rajdhani(
                           color: Colors.white54,
                           fontSize: 12,
@@ -192,8 +230,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     onPressed: () => provider.disconnect(),
-                    child: const Text("DISCONNECT"),
+                    child: Text(AppLocalizations.of(context)!.get('disconnect')),
                   ),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.watch, color: AppTheme.accent),
+                  title: Text(
+                    AppLocalizations.of(context)!.get('watch_hardware_settings'),
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WatchSettingsScreen(),
+                      ),
+                    );
+                  },
                 ),
                 if (!provider.isScanning)
                   Padding(
@@ -202,7 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: TextButton.icon(
                         icon: const Icon(Icons.refresh, color: Colors.white70),
                         label: Text(
-                          "Scan for other devices",
+                          AppLocalizations.of(context)!.get('scan_for_devices'),
                           style: GoogleFonts.rajdhani(color: Colors.white70),
                         ),
                         onPressed: () => provider.startScan(),
@@ -216,7 +274,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
-                  "No devices found. Tap refresh to scan.",
+                  AppLocalizations.of(context)!.get('no_devices_found'),
                   style: GoogleFonts.rajdhani(color: Colors.white54),
                 ),
               ),
@@ -260,7 +318,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       deviceAddress: result.device.remoteId.toString(),
                     );
                   },
-                  child: Text(isDefault ? "DEFAULT" : "CONNECT"),
+                  child: Text(isDefault ? AppLocalizations.of(context)!.get('set_default') : AppLocalizations.of(context)!.get('connect')),
                 ),
               );
             }),
@@ -281,15 +339,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         children: [
           _buildPermissionTile(
-            "Location Services",
-            "Required for BLE Scanning",
+            AppLocalizations.of(context)!.get('location_services'),
+            AppLocalizations.of(context)!.get('location_required'),
             Icons.location_on,
             () => provider.openLocationSettings(),
           ),
           const Divider(color: Colors.white10),
           _buildPermissionTile(
-            "Bluetooth Settings",
-            "Manage paired devices",
+            AppLocalizations.of(context)!.get('bluetooth_settings'),
+            AppLocalizations.of(context)!.get('bluetooth_manage'),
             Icons.settings_bluetooth,
             () => provider.openBluetoothSettings(),
           ),
@@ -345,73 +403,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "EMERGENCY CONTACT",
-            style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12),
+          // 1. SMS Checkbox & List
+          _buildActionHeader(
+            AppLocalizations.of(context)!.get('sms_notifications'),
+            provider.enableSms,
+            (val) => provider.saveSettings(enableSms: val),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _nameController,
-            style: GoogleFonts.rajdhani(color: Colors.white),
-            decoration: _inputDecoration("Contact Name"),
-            onChanged: (val) => provider.saveSettings(contactName: val),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _numberController,
-            style: GoogleFonts.rajdhani(color: Colors.white),
-            decoration: _inputDecoration("Phone Number"),
-            keyboardType: TextInputType.phone,
-            onChanged: (val) => provider.saveSettings(contactNumber: val),
-          ),
+          if (provider.enableSms)
+            _buildNumberList(
+              provider.smsNumbers,
+              (newList) => provider.saveSettings(smsNumbers: newList),
+              AppLocalizations.of(context)!.get('add_sms_number'),
+            ),
 
           const SizedBox(height: 24),
-          Text(
-            "FALL ACTION",
-            style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12),
+          // 2. Sequential CALL Checkbox & List
+          _buildActionHeader(
+            AppLocalizations.of(context)!.get('sequential_calls'),
+            provider.enableCall,
+            (val) => provider.saveSettings(enableCall: val),
           ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.white10, // Match input fill
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white10),
+          if (provider.enableCall)
+            _buildNumberList(
+              provider.callNumbers,
+              (newList) => provider.saveSettings(callNumbers: newList),
+              AppLocalizations.of(context)!.get('add_call_number'),
             ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<FallAction>(
-                value: provider.selectedFallAction,
-                dropdownColor: const Color(0xFF051923),
-                isExpanded: true,
-                style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16),
-                items: FallAction.values.map((action) {
-                  return DropdownMenuItem(
-                    value: action,
-                    child: Text(
-                      action.toString().split('.').last.toUpperCase(),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) provider.saveSettings(action: val);
-                },
+
+          const SizedBox(height: 24),
+          // 3. SOS Call Checkbox & Single Number
+          _buildActionHeader(
+            AppLocalizations.of(context)!.get('sos_emergency_call'),
+            provider.enableSos,
+            (val) => provider.saveSettings(enableSos: val),
+          ),
+          if (provider.enableSos)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: TextField(
+                style: GoogleFonts.rajdhani(color: Colors.white),
+                decoration: _inputDecoration(AppLocalizations.of(context)!.get('sos_number_hint')),
+                keyboardType: TextInputType.phone,
+                controller: TextEditingController(text: provider.sosNumber)
+                  ..selection = TextSelection.collapsed(
+                    offset: provider.sosNumber.length,
+                  ),
+                onChanged: (val) => provider.saveSettings(sosNumber: val),
               ),
             ),
-          ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
+          // Countdown Duration
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "COUNTDOWN TIMER",
+                AppLocalizations.of(context)!.get('countdown_timer'),
                 style: GoogleFonts.rajdhani(
                   color: Colors.white70,
                   fontSize: 12,
                 ),
               ),
               Text(
-                "${provider.countdownDuration} sec",
+                "${provider.countdownDuration} ${AppLocalizations.of(context)!.get('sec')}",
                 style: GoogleFonts.rajdhani(
                   color: AppTheme.accent,
                   fontWeight: FontWeight.bold,
@@ -420,16 +474,102 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           Slider(
-            value: provider.countdownDuration.toDouble(),
-            min: 5,
-            max: 60,
-            divisions: 11,
+            value: provider.countdownDuration.toDouble().clamp(1.0, 10.0),
+            min: 1,
+            max: 10,
+            divisions: 9,
             activeColor: AppTheme.accent,
             inactiveColor: Colors.white10,
             onChanged: (val) => provider.saveSettings(duration: val.toInt()),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildActionHeader(
+    String title,
+    bool value,
+    Function(bool?) onChanged,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.rajdhani(
+            color: value ? AppTheme.accent : Colors.white70,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: AppTheme.accent,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNumberList(
+    List<String> numbers,
+    Function(List<String>) onUpdate,
+    String hint,
+  ) {
+    return Column(
+      children: [
+        ...numbers.asMap().entries.map((entry) {
+          int idx = entry.key;
+          String num = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    style: GoogleFonts.rajdhani(color: Colors.white),
+                    decoration: _inputDecoration(hint),
+                    keyboardType: TextInputType.phone,
+                    // Use standard controller for inline editing
+                    controller: TextEditingController(text: num)
+                      ..selection = TextSelection.collapsed(offset: num.length),
+                    onChanged: (val) {
+                      List<String> newList = List.from(numbers);
+                      newList[idx] = val;
+                      onUpdate(newList);
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.remove_circle_outline,
+                    color: Colors.redAccent,
+                  ),
+                  onPressed: () {
+                    List<String> newList = List.from(numbers);
+                    newList.removeAt(idx);
+                    onUpdate(newList);
+                  },
+                ),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          icon: const Icon(Icons.add_circle_outline, color: Colors.greenAccent),
+          label: Text(
+            AppLocalizations.of(context)!.get('add_phone_number'),
+            style: GoogleFonts.rajdhani(color: Colors.greenAccent),
+          ),
+          onPressed: () {
+            List<String> newList = List.from(numbers);
+            newList.add("");
+            onUpdate(newList);
+          },
+        ),
+      ],
     );
   }
 

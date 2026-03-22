@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:vibration/vibration.dart';
 import 'package:latlong2/latlong.dart';
@@ -15,7 +16,7 @@ import '../services/ble_service.dart';
 
 enum AlertState { safe, warning, alarm }
 
-enum FallAction { call, sms, sos }
+// Removed single selection FallAction enum as it's now multi-select via checkboxes
 
 class SensorProvider with ChangeNotifier {
   final BleService _bleService = BleService();
@@ -27,24 +28,52 @@ class SensorProvider with ChangeNotifier {
   int _spo2 = 0;
   int _batteryLevel = 0;
   bool _isConnected = false;
+  String? _locale; // Current locale code (e.g., 'en', 'sr')
 
   String _debugStatus = "";
 
-  // Settings
-  String? _defaultDeviceAddress;
-  String _emergencyContactName = "";
-  String _emergencyContactNumber = "";
-  FallAction _selectedFallAction = FallAction.call;
-  int _countdownDuration = 15;
+  // Multi-Action Safety Settings
+  bool _enableSms = false;
+  List<String> _smsNumbers = [];
+
+  bool _enableCall = false;
+  List<String> _callNumbers = [];
+
+  bool _enableSos = false;
+  String _sosNumber = "194"; // Emergency in Serbia
+  int _countdownDuration = 5;
 
   // Countdown State
   bool _isCountingDown = false;
   int _currentCountdown = 0;
   Timer? _countdownTimer;
 
-  // Scanning State
+  // State
+  String? _defaultDeviceAddress;
   List<ScanResult> _scanResults = [];
   bool _isScanning = false;
+
+  // Watch Settings State
+  int _watchScreenTimeoutMs = 15000;
+  double _watchFallLow = 0.6;
+  double _watchFallHigh = 3.5;
+  double _watchStillTol = 0.2;
+  double _watchAngleThr = 60.0;
+  int _watchStillDur = 5000;
+  
+  // New Watch-Specific Action/Network Settings
+  bool _watchWifiEnabled = false;
+  String _watchWifiSsid = "";
+  String _watchWifiPass = "";
+  bool _watchEnableSms = false;
+  String _watchSmsNumbers = "";
+  bool _watchEnableCall = false;
+  String _watchCallNumbers = "";
+  bool _watchEnableSos = false;
+  String _watchSosNumber = "";
+  int _watchActionOrigin = 0; // 0: Watch Only, 1: App + Watch
+
+  bool _isSyncingWatchSettings = false;
 
   AlertState get alertState => _alertState;
   String get rawMessage => _rawMessage;
@@ -54,12 +83,21 @@ class SensorProvider with ChangeNotifier {
   int get batteryLevel => _batteryLevel;
   bool get isConnected => _isConnected;
   LatLng? get fallLocation => _fallLocation;
+  String? get locale => _locale;
 
   // Getters for Settings & UI
-  String get emergencyContactName => _emergencyContactName;
-  String get emergencyContactNumber => _emergencyContactNumber;
-  FallAction get selectedFallAction => _selectedFallAction;
-  int get countdownDuration => _countdownDuration;
+  bool get enableSms => _enableSms;
+  List<String> get smsNumbers => _smsNumbers;
+  bool get enableCall => _enableCall;
+  List<String> get callNumbers => _callNumbers;
+  bool get enableSos => _enableSos;
+  String get sosNumber => _sosNumber;
+
+  // Compatibility getters for Dashboard
+  String get emergencyContactName => "Emergency Protocol";
+  String get emergencyContactNumber => _sosNumber;
+
+  int get countdownDuration => _countdownDuration.clamp(1, 10);
   bool get isCountingDown => _isCountingDown;
   int get currentCountdown => _currentCountdown;
   List<ScanResult> get scanResults => _scanResults;
@@ -69,6 +107,27 @@ class SensorProvider with ChangeNotifier {
       _bleService.connectedDevice?.remoteId.toString();
   String get connectedDeviceName =>
       _bleService.connectedDevice?.platformName ?? "Unknown Device";
+
+  // Watch Settings Getters
+  int get watchScreenTimeoutMs => _watchScreenTimeoutMs;
+  double get watchFallLow => _watchFallLow;
+  double get watchFallHigh => _watchFallHigh;
+  double get watchStillTol => _watchStillTol;
+  double get watchAngleThr => _watchAngleThr;
+  int get watchStillDur => _watchStillDur;
+  
+  bool get watchWifiEnabled => _watchWifiEnabled;
+  String get watchWifiSsid => _watchWifiSsid;
+  String get watchWifiPass => _watchWifiPass;
+  bool get watchEnableSms => _watchEnableSms;
+  String get watchSmsNumbers => _watchSmsNumbers;
+  bool get watchEnableCall => _watchEnableCall;
+  String get watchCallNumbers => _watchCallNumbers;
+  bool get watchEnableSos => _watchEnableSos;
+  String get watchSosNumber => _watchSosNumber;
+  int get watchActionOrigin => _watchActionOrigin;
+
+  bool get isSyncingWatchSettings => _isSyncingWatchSettings;
 
   LatLng? _fallLocation;
 
@@ -122,36 +181,57 @@ class SensorProvider with ChangeNotifier {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     _defaultDeviceAddress = prefs.getString('default_device_address');
-    print("SETTINGS LOADED: Default Device = $_defaultDeviceAddress");
-    _emergencyContactName = prefs.getString('contact_name') ?? "";
-    _emergencyContactNumber = prefs.getString('contact_number') ?? "";
-    _countdownDuration = prefs.getInt('countdown_duration') ?? 15;
+    
+    // Multi-action loading
+    _enableSms = prefs.getBool('enable_sms') ?? false;
+    _smsNumbers = prefs.getStringList('sms_numbers') ?? [];
+    
+    _enableCall = prefs.getBool('enable_call') ?? false;
+    _callNumbers = prefs.getStringList('call_numbers') ?? [];
+    
+    _enableSos = prefs.getBool('enable_sos') ?? false;
+    _sosNumber = prefs.getString('sos_number') ?? "194";
 
-    int actionIdx = prefs.getInt('fall_action') ?? 0;
-    _selectedFallAction = FallAction.values[actionIdx];
-
+    _countdownDuration = (prefs.getInt('countdown_duration') ?? 5).clamp(1, 10);
+    _locale = prefs.getString('app_locale');
     notifyListeners();
   }
 
   Future<void> saveSettings({
-    String? contactName,
-    String? contactNumber,
-    FallAction? action,
+    bool? enableSms,
+    List<String>? smsNumbers,
+    bool? enableCall,
+    List<String>? callNumbers,
+    bool? enableSos,
+    String? sosNumber,
     int? duration,
     String? deviceAddress,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    if (contactName != null) {
-      _emergencyContactName = contactName;
-      prefs.setString('contact_name', contactName);
+    
+    if (enableSms != null) {
+      _enableSms = enableSms;
+      prefs.setBool('enable_sms', enableSms);
     }
-    if (contactNumber != null) {
-      _emergencyContactNumber = contactNumber;
-      prefs.setString('contact_number', contactNumber);
+    if (smsNumbers != null) {
+      _smsNumbers = smsNumbers;
+      prefs.setStringList('sms_numbers', smsNumbers);
     }
-    if (action != null) {
-      _selectedFallAction = action;
-      prefs.setInt('fall_action', action.index);
+    if (enableCall != null) {
+      _enableCall = enableCall;
+      prefs.setBool('enable_call', enableCall);
+    }
+    if (callNumbers != null) {
+      _callNumbers = callNumbers;
+      prefs.setStringList('call_numbers', callNumbers);
+    }
+    if (enableSos != null) {
+      _enableSos = enableSos;
+      prefs.setBool('enable_sos', enableSos);
+    }
+    if (sosNumber != null) {
+      _sosNumber = sosNumber;
+      prefs.setString('sos_number', sosNumber);
     }
     if (duration != null) {
       _countdownDuration = duration;
@@ -164,7 +244,35 @@ class SensorProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void startScan({bool isAutoConnect = false}) {
+  Future<void> setLocale(String? localeCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    _locale = localeCode;
+    if (localeCode != null) {
+      await prefs.setString('app_locale', localeCode);
+    } else {
+      await prefs.remove('app_locale');
+    }
+    notifyListeners();
+  }
+
+  Future<void> _ensureBluetoothOn() async {
+    if (Platform.isAndroid) {
+      try {
+        final state = await FlutterBluePlus.adapterState.first;
+        if (state == BluetoothAdapterState.off) {
+          await FlutterBluePlus.turnOn();
+          // Wait briefly for the adapter to fully initialize
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      } catch (e) {
+        print("Could not turn on Bluetooth automatically: $e");
+        await openBluetoothSettings();
+      }
+    }
+  }
+
+  Future<void> startScan({bool isAutoConnect = false}) async {
+    await _ensureBluetoothOn();
     _isScanning = true;
     _scanResults = [];
     notifyListeners();
@@ -209,6 +317,123 @@ class SensorProvider with ChangeNotifier {
           notifyListeners();
         }
       });
+    }
+  }
+
+  // --- Watch Settings Sync Methods ---
+  Future<void> readWatchSettings() async {
+    if (!isConnected) return;
+    
+    _isSyncingWatchSettings = true;
+    notifyListeners();
+
+    try {
+      final data = await _bleService.readCharacteristic();
+      if (data != null && data.isNotEmpty) {
+        final jsonString = utf8.decode(data);
+        final Map<String, dynamic> settings = jsonDecode(jsonString);
+
+        if (settings.containsKey('screen_timeout')) _watchScreenTimeoutMs = settings['screen_timeout'];
+        if (settings.containsKey('fall_low')) _watchFallLow = (settings['fall_low'] as num).toDouble();
+        if (settings.containsKey('fall_high')) _watchFallHigh = (settings['fall_high'] as num).toDouble();
+        if (settings.containsKey('still_tol')) _watchStillTol = (settings['still_tol'] as num).toDouble();
+        if (settings.containsKey('angle_thr')) _watchAngleThr = (settings['angle_thr'] as num).toDouble();
+        if (settings.containsKey('still_dur')) _watchStillDur = settings['still_dur'];
+        
+        if (settings.containsKey('wifi_en')) _watchWifiEnabled = settings['wifi_en'] == true;
+        if (settings.containsKey('wifi_ssid')) _watchWifiSsid = settings['wifi_ssid'] ?? "";
+        if (settings.containsKey('wifi_pass')) _watchWifiPass = settings['wifi_pass'] ?? "";
+        if (settings.containsKey('en_sms')) _watchEnableSms = settings['en_sms'] == true;
+        if (settings.containsKey('sms_nums')) _watchSmsNumbers = settings['sms_nums'] ?? "";
+        if (settings.containsKey('en_call')) _watchEnableCall = settings['en_call'] == true;
+        if (settings.containsKey('call_nums')) _watchCallNumbers = settings['call_nums'] ?? "";
+        if (settings.containsKey('en_sos')) _watchEnableSos = settings['en_sos'] == true;
+        if (settings.containsKey('sos_num')) _watchSosNumber = settings['sos_num'] ?? "";
+        if (settings.containsKey('act_orig')) _watchActionOrigin = settings['act_orig'] ?? 0;
+      }
+    } catch (e) {
+      print("Failed to read watch settings: $e");
+    } finally {
+      _isSyncingWatchSettings = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> writeWatchSettings({
+    int? screenTimeoutMs,
+    double? fallLow,
+    double? fallHigh,
+    double? stillTol,
+    double? angleThr,
+    int? stillDur,
+    bool? wifiEnabled,
+    String? wifiSsid,
+    String? wifiPass,
+    bool? enableSms,
+    String? smsNumbers,
+    bool? enableCall,
+    String? callNumbers,
+    bool? enableSos,
+    String? sosNumber,
+    int? actionOrigin,
+    String? syncTime,
+  }) async {
+    if (!isConnected) return false;
+
+    _isSyncingWatchSettings = true;
+    notifyListeners();
+
+    try {
+      final Map<String, dynamic> settings = {
+        'screen_timeout': screenTimeoutMs ?? _watchScreenTimeoutMs,
+        'fall_low': fallLow ?? _watchFallLow,
+        'fall_high': fallHigh ?? _watchFallHigh,
+        'still_tol': stillTol ?? _watchStillTol,
+        'angle_thr': angleThr ?? _watchAngleThr,
+        'still_dur': stillDur ?? _watchStillDur,
+        'wifi_en': wifiEnabled ?? _watchWifiEnabled,
+        'wifi_ssid': wifiSsid ?? _watchWifiSsid,
+        'wifi_pass': wifiPass ?? _watchWifiPass,
+        'en_sms': enableSms ?? _watchEnableSms,
+        'sms_nums': smsNumbers ?? _watchSmsNumbers,
+        'en_call': enableCall ?? _watchEnableCall,
+        'call_nums': callNumbers ?? _watchCallNumbers,
+        'en_sos': enableSos ?? _watchEnableSos,
+        'sos_num': sosNumber ?? _watchSosNumber,
+        'act_orig': actionOrigin ?? _watchActionOrigin,
+        'sync_time': syncTime,
+      };
+
+      final jsonString = jsonEncode(settings);
+      final data = utf8.encode(jsonString);
+      
+      bool success = await _bleService.writeCharacteristic(data);
+      if (success) {
+        // Update local state if successful
+        if (screenTimeoutMs != null) _watchScreenTimeoutMs = screenTimeoutMs;
+        if (fallLow != null) _watchFallLow = fallLow;
+        if (fallHigh != null) _watchFallHigh = fallHigh;
+        if (stillTol != null) _watchStillTol = stillTol;
+        if (angleThr != null) _watchAngleThr = angleThr;
+        if (stillDur != null) _watchStillDur = stillDur;
+        if (wifiEnabled != null) _watchWifiEnabled = wifiEnabled;
+        if (wifiSsid != null) _watchWifiSsid = wifiSsid;
+        if (wifiPass != null) _watchWifiPass = wifiPass;
+        if (enableSms != null) _watchEnableSms = enableSms;
+        if (smsNumbers != null) _watchSmsNumbers = smsNumbers;
+        if (enableCall != null) _watchEnableCall = enableCall;
+        if (callNumbers != null) _watchCallNumbers = callNumbers;
+        if (enableSos != null) _watchEnableSos = enableSos;
+        if (sosNumber != null) _watchSosNumber = sosNumber;
+        if (actionOrigin != null) _watchActionOrigin = actionOrigin;
+      }
+      return success;
+    } catch (e) {
+      print("Failed to write watch settings: $e");
+      return false;
+    } finally {
+      _isSyncingWatchSettings = false;
+      notifyListeners();
     }
   }
 
@@ -286,49 +511,61 @@ class SensorProvider with ChangeNotifier {
   }
 
   Future<void> _executeFallAction() async {
-    print("EXECUTING FALL ACTION: $_selectedFallAction");
+    print("Executing Multi-Action Protocol...");
 
-    switch (_selectedFallAction) {
-      case FallAction.call:
-        if (_emergencyContactNumber.isNotEmpty) {
-          if (Platform.isAndroid || Platform.isIOS) {
-            await FlutterPhoneDirectCaller.callNumber(_emergencyContactNumber);
-          } else {
-            print("Direct call not supported on this platform.");
+    // 1. Send SMS if enabled
+    if (_enableSms && _smsNumbers.isNotEmpty) {
+      String googleMapsUrl = _fallLocation != null 
+          ? "https://maps.google.com/?q=${_fallLocation?.latitude},${_fallLocation?.longitude}" 
+          : "Location unavailable";
+          
+      String message = "SOS! LifeLink detected a fall. $googleMapsUrl";
+      
+      for (String number in _smsNumbers) {
+        if (number.trim().isEmpty) continue;
+        final Uri smsLaunchUri = Uri(
+          scheme: 'sms',
+          path: number,
+          queryParameters: <String, String>{'body': message},
+        );
+        try {
+          if (await canLaunchUrl(smsLaunchUri)) {
+            await launchUrl(smsLaunchUri);
           }
+        } catch (e) {
+          print("SMS Error for $number: $e");
         }
-        break;
-      case FallAction.sms:
-        if (_emergencyContactNumber.isNotEmpty) {
-          String message =
-              "SOS! I have detected a fall. Location: https://maps.google.com/?q=${_fallLocation?.latitude},${_fallLocation?.longitude}";
+      }
+    }
 
-          final Uri smsLaunchUri = Uri(
-            scheme: 'sms',
-            path: _emergencyContactNumber,
-            queryParameters: <String, String>{'body': message},
-          );
+    // 2. Sequential Calls if enabled
+    if (_enableCall && _callNumbers.isNotEmpty) {
+      for (String number in _callNumbers) {
+        if (number.trim().isEmpty) continue;
+        print("Sequential Call trying: $number");
+        try {
+          // Direct call (no user confirmation required once permission granted)
+          await FlutterPhoneDirectCaller.callNumber(number);
+          
+          // Note: detection of "answered" vs "not answered" requires native telephony listeners.
+          // In Flutter, we could wait some time or check call logs (if permitted),
+          // but for now we initiate the protocol.
+          
+          // Wait briefly before trying next (if dialer was closed or failed)
+          await Future.delayed(const Duration(seconds: 15)); 
+        } catch (e) {
+          print("Call error for $number: $e");
+        }
+      }
+    }
 
-          try {
-            if (await canLaunchUrl(smsLaunchUri)) {
-              await launchUrl(smsLaunchUri);
-            } else {
-              print("Could not launch SMS uri");
-            }
-          } catch (e) {
-            print("SMS Error: $e");
-          }
-        }
-        break;
-      case FallAction.sos:
-        if (_emergencyContactNumber.isNotEmpty) {
-          final Uri launchUri = Uri(
-            scheme: 'tel',
-            path: _emergencyContactNumber,
-          );
-          await launchUrl(launchUri);
-        }
-        break;
+    // 3. SOS Call if enabled
+    if (_enableSos && _sosNumber.isNotEmpty) {
+       final Uri launchUri = Uri(
+        scheme: 'tel',
+        path: _sosNumber,
+      );
+      await launchUrl(launchUri);
     }
   }
 
@@ -417,7 +654,8 @@ class SensorProvider with ChangeNotifier {
     }
   }
 
-  void retryConnection() {
+  void retryConnection() async {
+    await _ensureBluetoothOn();
     startScan(isAutoConnect: true);
   }
 
@@ -434,6 +672,22 @@ class SensorProvider with ChangeNotifier {
     } else if (Platform.isWindows) {
       // Open Windows Bluetooth settings
       await Process.run('start', ['ms-settings:bluetooth'], runInShell: true);
+    }
+  }
+
+  @override
+  void notifyListeners() {
+    // If there's a frame in progress, defer the notification until after the frame.
+    // This prevents "setState() or markNeedsBuild() called during build" errors.
+    try {
+      if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
+        Future.microtask(() => super.notifyListeners());
+      } else {
+        super.notifyListeners();
+      }
+    } catch (e) {
+      // Fallback for cases where SchedulerBinding might not be initialized
+      Future.microtask(() => super.notifyListeners());
     }
   }
 }

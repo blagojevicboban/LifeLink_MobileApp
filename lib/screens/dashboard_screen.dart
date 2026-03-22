@@ -5,7 +5,9 @@ import 'package:flutter_map/flutter_map.dart';
 
 import '../providers/sensor_provider.dart';
 import '../core/app_theme.dart';
+import '../core/localization.dart';
 import 'settings_screen.dart'; // Import SettingsScreen
+import 'help_screen.dart'; // Import HelpScreen
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -18,16 +20,6 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white70),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsScreen()),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: Consumer<SensorProvider>(
         builder: (context, provider, child) {
@@ -50,7 +42,7 @@ class DashboardScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                _buildHeader(provider),
+                                _buildHeader(context, provider),
 
                                 const SizedBox(height: 32),
                                 // Main Status Card with rounded/circular aesthetic
@@ -59,7 +51,7 @@ class DashboardScreen extends StatelessWidget {
 
                                 const SizedBox(height: 24),
                                 // Metrics Grid
-                                _buildMetricsGrid(provider),
+                                _buildMetricsGrid(context, provider),
 
                                 const Spacer(),
                                 // Logo Section
@@ -67,7 +59,7 @@ class DashboardScreen extends StatelessWidget {
                                   child: Column(
                                     children: [
                                       Text(
-                                        "Info",
+                                        AppLocalizations.of(context)!.get('info'),
                                         style: GoogleFonts.rajdhani(
                                           color: Colors.white70,
                                           fontSize: 14,
@@ -126,8 +118,8 @@ class DashboardScreen extends StatelessWidget {
                                         vertical: 16,
                                       ),
                                     ),
-                                    child: const Text("RESET ALARM"),
-                                  ),
+                                      child: Text(AppLocalizations.of(context)!.get('reset_alarm')),
+                                    ),
 
                                 // Map Section (Visible on Alarm with valid location)
                                 if (provider.alertState == AlertState.alarm &&
@@ -195,12 +187,20 @@ class DashboardScreen extends StatelessWidget {
                                                   BorderRadius.circular(30),
                                             ),
                                           ),
-                                          child: const Text("DISCONNECT"),
-                                        )
+                                            child: Text(AppLocalizations.of(context)!.get('disconnect')),
+                                          )
                                       : ElevatedButton(
-                                          onPressed: () =>
-                                              provider.retryConnection(),
-                                          style: ElevatedButton.styleFrom(
+                                            onPressed: () {
+                                              if (provider.defaultDeviceAddress == null || provider.defaultDeviceAddress!.isEmpty) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                                                );
+                                              } else {
+                                                provider.retryConnection();
+                                              }
+                                            },
+                                            style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.cyan
                                                 .withOpacity(0.2),
                                             foregroundColor: Colors.cyan,
@@ -212,7 +212,7 @@ class DashboardScreen extends StatelessWidget {
                                                   BorderRadius.circular(30),
                                             ),
                                           ),
-                                          child: const Text("RECONNECT"),
+                                          child: Text(AppLocalizations.of(context)!.get('reconnect')),
                                         ),
                                 ),
                               ],
@@ -243,7 +243,7 @@ class DashboardScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        "FALL DETECTED!",
+                        AppLocalizations.of(context)!.get('fall_detected_exclamation'),
                         style: GoogleFonts.rajdhani(
                           color: Colors.white,
                           fontSize: 32,
@@ -253,7 +253,7 @@ class DashboardScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        "Requesting help in",
+                        AppLocalizations.of(context)!.get('requesting_help_in'),
                         style: GoogleFonts.rajdhani(
                           color: Colors.white70,
                           fontSize: 18,
@@ -292,7 +292,7 @@ class DashboardScreen extends StatelessWidget {
                           ),
                           onPressed: () => provider.cancelFall(),
                           child: Text(
-                            "I'M OK",
+                            AppLocalizations.of(context)!.get('im_ok'),
                             style: GoogleFonts.rajdhani(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -309,7 +309,7 @@ class DashboardScreen extends StatelessWidget {
                           // For now user can just wait.
                         },
                         child: Text(
-                          "Sending to: ${provider.emergencyContactName.isNotEmpty ? provider.emergencyContactName : 'Emergency'}",
+                          "${AppLocalizations.of(context)!.get('sending_to')} ${provider.emergencyContactName.isNotEmpty ? provider.emergencyContactName : AppLocalizations.of(context)!.get('emergency')}",
                           style: GoogleFonts.rajdhani(
                             color: Colors.white30,
                             fontSize: 14,
@@ -326,16 +326,35 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(SensorProvider provider) {
+  Widget _buildHeader(BuildContext context, SensorProvider provider) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Using visible placeholder for Impact similar to design
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "IMPACT (G)",
+              "LIFELINK",
+              style: GoogleFonts.rajdhani(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 2,
+              ),
+            ),
+            Text(
+              "COMPANION APP",
+              style: GoogleFonts.rajdhani(
+                fontSize: 12,
+                color: AppTheme.accent,
+                letterSpacing: 4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Impact Metrics
+            Text(
+              AppLocalizations.of(context)!.get('impact_g'),
               style: GoogleFonts.rajdhani(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -353,40 +372,105 @@ class DashboardScreen extends StatelessWidget {
             ),
           ],
         ),
-
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: provider.isConnected
-                ? Colors.green.withOpacity(0.1)
-                : Colors.red.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20), // More rounded
-            border: Border.all(
-              color: provider.isConnected ? Colors.green : Colors.red,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Row(
+              children: [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.language, color: Colors.white70),
+                  color: AppTheme.surface,
+                  offset: const Offset(0, 45),
+                  onSelected: (String code) {
+                    provider.setLocale(code == 'system' ? null : code);
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'system',
+                      child: Text('System Language', style: GoogleFonts.rajdhani(color: Colors.white)),
+                    ),
+                    const PopupMenuDivider(),
+                    PopupMenuItem<String>(
+                      value: 'en',
+                      child: Row(
+                        children: [
+                          const Text('🇺🇸 ', style: TextStyle(fontSize: 18)),
+                          Text('English', style: GoogleFonts.rajdhani(color: Colors.white)),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'sr',
+                      child: Row(
+                        children: [
+                          const Text('🇷🇸 ', style: TextStyle(fontSize: 18)),
+                          Text('Srpski', style: GoogleFonts.rajdhani(color: Colors.white)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.help_outline, color: Colors.white70),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HelpScreen(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.white70),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                provider.isConnected
-                    ? Icons.bluetooth_connected
-                    : Icons.bluetooth_disabled,
-                size: 16,
-                color: provider.isConnected ? Colors.green : Colors.red,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                provider.isConnected && provider.batteryLevel > 0
-                    ? "BAT ${provider.batteryLevel}%"
-                    : "BLT",
-                style: GoogleFonts.rajdhani(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: provider.isConnected
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
                   color: provider.isConnected ? Colors.green : Colors.red,
                 ),
               ),
-            ],
-          ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    provider.isConnected
+                        ? Icons.bluetooth_connected
+                        : Icons.bluetooth_disabled,
+                    size: 16,
+                    color: provider.isConnected ? Colors.green : Colors.red,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    provider.isConnected && provider.batteryLevel > 0
+                        ? "BAT ${provider.batteryLevel}%"
+                        : "BLT",
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: provider.isConnected ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -398,86 +482,108 @@ class DashboardScreen extends StatelessWidget {
     String subText;
     IconData statusIcon;
 
-    switch (provider.alertState) {
-      case AlertState.safe:
-        statusColor = const Color(0xFF00E5FF); // Cyan
-        statusText = "SYSTEM NOMINAL";
-        subText = "Monitoring Active";
-        statusIcon = Icons.shield_outlined;
-        break;
-      case AlertState.warning:
-        statusColor = AppTheme.warning;
-        statusText = "MOVEMENT DETECTED";
-        subText = "Analyzing Impact Pattern...";
-        statusIcon = Icons.warning_amber_rounded;
-        break;
-      case AlertState.alarm:
-        statusColor = AppTheme.danger;
-        statusText = "FALL DETECTED";
-        subText = "CRITICAL ALERT";
-        statusIcon = Icons.health_and_safety_outlined;
-        break;
+    if (!provider.isConnected) {
+      statusColor = Colors.grey[500]!;
+      statusText = AppLocalizations.of(context)!.get('disconnected').toUpperCase();
+      subText = AppLocalizations.of(context)!.get('tap_to_reconnect');
+      statusIcon = Icons.bluetooth_disabled;
+    } else {
+      switch (provider.alertState) {
+        case AlertState.safe:
+          statusColor = const Color(0xFF00E5FF); // Cyan
+          statusText = AppLocalizations.of(context)!.get('system_nominal');
+          subText = AppLocalizations.of(context)!.get('monitoring_active');
+          statusIcon = Icons.shield_outlined;
+          break;
+        case AlertState.warning:
+          statusColor = AppTheme.warning;
+          statusText = AppLocalizations.of(context)!.get('movement_detected');
+          subText = AppLocalizations.of(context)!.get('analyzing_impact');
+          statusIcon = Icons.warning_amber_rounded;
+          break;
+        case AlertState.alarm:
+          statusColor = AppTheme.danger;
+          statusText = AppLocalizations.of(context)!.get('fall_detected_exclamation').replaceAll("!", "");
+          subText = AppLocalizations.of(context)!.get('critical_alert');
+          statusIcon = Icons.health_and_safety_outlined;
+          break;
+      }
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF051923), // Slightly lighter dark for card
-        shape: BoxShape.circle, // Circular shape key for design
-        border: Border.all(color: statusColor.withOpacity(0.5), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: statusColor.withOpacity(0.15),
-            blurRadius: 30,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(statusIcon, size: 48, color: statusColor),
-          const SizedBox(height: 12),
-          Text(
-            statusText,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.rajdhani(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: statusColor,
-              shadows: [
-                Shadow(color: statusColor.withOpacity(0.8), blurRadius: 10),
-              ],
+    return GestureDetector(
+      onTap: !provider.isConnected
+          ? () {
+              if (provider.defaultDeviceAddress == null ||
+                  provider.defaultDeviceAddress!.isEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
+              } else {
+                provider.retryConnection();
+              }
+            }
+          : null,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF051923), // Slightly lighter dark for card
+          shape: BoxShape.circle, // Circular shape key for design
+          border: Border.all(color: statusColor.withOpacity(0.5), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: statusColor.withOpacity(0.15),
+              blurRadius: 30,
+              spreadRadius: 2,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subText,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-              letterSpacing: 1.0,
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(statusIcon, size: 48, color: statusColor),
+            const SizedBox(height: 12),
+            Text(
+              statusText,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.rajdhani(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: statusColor,
+                shadows: [
+                  Shadow(color: statusColor.withOpacity(0.8), blurRadius: 10),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              subText,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 12,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMetricsGrid(SensorProvider provider) {
+  Widget _buildMetricsGrid(BuildContext context, SensorProvider provider) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildMetricTile(
-          "PULSE",
+          AppLocalizations.of(context)!.get('pulse'),
           "${provider.pulse} BPM",
           Icons.favorite,
           Colors.redAccent,
         ),
         _buildMetricTile(
-          "SpO2",
+          AppLocalizations.of(context)!.get('spo2'),
           "${provider.spo2}%",
           Icons.water_drop,
           Colors.blueAccent,
