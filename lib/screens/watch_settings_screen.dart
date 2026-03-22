@@ -279,22 +279,29 @@ class _WatchSettingsScreenState extends State<WatchSettingsScreen> {
                 const SizedBox(height: 24),
                 _buildCardHeader(AppLocalizations.of(context)!.get('set_time_on_watch')),
                 ElevatedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     // Get current time in YYYY-MM-DD HH:MM:SS format
                     final now = DateTime.now();
                     final formattedTime = 
                       "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} "
                       "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
                     
-                    provider.writeWatchSettings(syncTime: formattedTime);
+                    bool success = await provider.writeWatchSettings(syncTime: formattedTime);
                     
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(AppLocalizations.of(context)!.get('watch_time_synced'), style: GoogleFonts.rajdhani()),
-                        backgroundColor: Colors.blueAccent,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            success 
+                              ? AppLocalizations.of(context)!.get('watch_time_synced')
+                              : AppLocalizations.of(context)!.get('error_syncing_time'), 
+                            style: GoogleFonts.rajdhani()
+                          ),
+                          backgroundColor: success ? Colors.blueAccent : Colors.redAccent,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.access_time, color: Colors.white),
                   label: Text(AppLocalizations.of(context)!.get('set_time_on_watch'), style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16)),

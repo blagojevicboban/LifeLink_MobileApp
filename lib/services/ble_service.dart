@@ -87,6 +87,16 @@ class BleService {
     try {
       // autoConnect: false forces immediate connection attempt
       await device.connect(autoConnect: false);
+      
+      // Negotiate larger MTU for JSON data transfer (esp32 supports up to 512, 256 is safe)
+      try {
+        if (Platform.isAndroid) {
+          await device.requestMtu(256);
+        }
+      } catch (e) {
+        print("MTU Request error (ignoring): $e");
+      }
+
       await _discoverServices();
     } catch (e) {
       print("Connection Error: $e");

@@ -1,0 +1,88 @@
+﻿Analyzing LifeLink_MobileApp...                                 
+
+warning - The value of the field '_debugStatus' isn't used - lib\providers\sensor_provider.dart:34:10 - unused_field
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:288:9 - avoid_print
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:357:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:359:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:361:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:363:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:365:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:367:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:370:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:372:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:374:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:376:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:378:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:380:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:382:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:384:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:386:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\providers\sensor_provider.dart:388:11 - curly_braces_in_flow_control_structures
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:391:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:474:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:542:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:570:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:592:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:601:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:613:11 - avoid_print
+warning - Dead code - lib\providers\sensor_provider.dart:629:54 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\providers\sensor_provider.dart:629:57 - dead_null_aware_expression
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:704:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:706:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:109:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:180:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:205:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:231:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:442:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:443:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:533:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:536:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:555:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\help_screen.dart:121:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\help_screen.dart:123:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:102:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:149:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:334:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:398:29 - deprecated_member_use
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\settings_screen.dart:510:11 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\watch_settings_screen.dart:153:19 - deprecated_member_use
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\watch_settings_screen.dart:180:19 - deprecated_member_use
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\watch_settings_screen.dart:219:19 - deprecated_member_use
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\watch_settings_screen.dart:240:19 - deprecated_member_use
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\watch_settings_screen.dart:261:19 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\watch_settings_screen.dart:292:44 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\watch_settings_screen.dart:296:53 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\watch_settings_screen.dart:297:53 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\watch_settings_screen.dart:309:54 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:50:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:61:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:70:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:82:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:97:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:102:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:118:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:138:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:145:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:157:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:168:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:174:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\firebase_service.dart:27:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\firebase_service.dart:68:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\firebase_service.dart:95:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\firebase_service.dart:109:7 - avoid_print
+
+flutter : 70 issues found. (r
+an in 2.6s)
+At line:1 char:1
++ flutter analyze > analysis_
+output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (70 issu  
+  es found. (ran in 2.6s):   
+ String) [], RemoteExcept    
+ion
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 

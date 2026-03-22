@@ -1,0 +1,102 @@
+﻿Building Windows application...                                 
+flutter : C:\Program Files\Mi
+crosoft Visual Studio\18\Comm
+unity\MSBuild\Microsoft\VC\v1
+80\Microsoft.CppCommon.target
+s(166,5): error MSB3073: The 
+command "setlocal [C:\LifeLin
+k\LifeLink_MobileApp\build\wi
+ndows\x64\INSTALL.vcxproj]
+At line:1 char:1
++ flutter build windows --deb
+ug > build_output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (C:\Prog  
+  ram File...NSTALL.vcxpro   
+ j]:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: "C:\Program Fi
+les\Microsoft Visual Studio\1
+8\Community\Common7\IDE\Commo
+nExtensions\Microsoft\CMake\C
+Make\bin\cmake.exe" -DBUILD_T
+YPE=Debug -P cmake_install.cm
+ake [C:\LifeLink\LifeLink_Mob
+ileApp\build\windows\x64\INST
+ALL.vcxproj]
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: if %errorlevel
+% neq 0 goto :cmEnd [C:\LifeL
+ink\LifeLink_MobileApp\build\
+windows\x64\INSTALL.vcxproj]
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: :cmEnd [C:\Lif
+eLink\LifeLink_MobileApp\buil
+d\windows\x64\INSTALL.vcxproj
+]
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: endlocal & cal
+l :cmErrorLevel %errorlevel% 
+& goto :cmDone [C:\LifeLink\L
+ifeLink_MobileApp\build\windo
+ws\x64\INSTALL.vcxproj]
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: :cmErrorLevel 
+[C:\LifeLink\LifeLink_MobileA
+pp\build\windows\x64\INSTALL.
+vcxproj]
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: exit /b %1 [C:
+\LifeLink\LifeLink_MobileApp\
+build\windows\x64\INSTALL.vcx
+proj]
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: :cmDone [C:\Li
+feLink\LifeLink_MobileApp\bui
+ld\windows\x64\INSTALL.vcxpro
+j]
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: if %errorlevel
+% neq 0 goto :VCEnd [C:\LifeL
+ink\LifeLink_MobileApp\build\
+windows\x64\INSTALL.vcxproj]
+C:\Program Files\Microsoft Vi
+sual Studio\18\Community\MSBu
+ild\Microsoft\VC\v180\Microso
+ft.CppCommon.targets(166,5): 
+error MSB3073: :VCEnd" exited
+ with code 1. [C:\LifeLink\Li
+feLink_MobileApp\build\window
+s\x64\INSTALL.vcxproj]
+Building Windows application...                                    30,6s
+Build process failed.

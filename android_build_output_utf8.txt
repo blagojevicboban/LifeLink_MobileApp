@@ -1,0 +1,28 @@
+﻿Running Gradle task 'assembleDebug'...                          
+flutter : Note: C:\Users\Mejk
+erslab\AppData\Local\Pub\Cach
+e\hosted\pub.dev\android_inte
+nt_plus-5.3.1\android\src\mai
+n\java\dev\fluttercommunity\p
+lus\androidintent\MethodCallH
+andlerImpl.java uses unchecke
+d or unsafe operations.
+At line:1 char:1
++ flutter build apk --debug >
+ android_build_output.txt 2>&
+1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo           
+   : NotSpecified: (Note: C  
+  :\Users\...afe operation   
+ s.:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+Note: Recompile with -Xlint:u
+nchecked for details.
+Running Gradle task 'assembleDebug'...                            112,1s
+ΓêÜ Built build\app\outputs\flutter-apk\app-debug.apk

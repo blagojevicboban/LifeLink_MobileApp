@@ -76,7 +76,8 @@ class AppLocalizations {
       'enable_watch_sos': 'Enable Watch SOS',
       'sos_number': 'SOS Number',
       'set_time_on_watch': 'Set Watch Time',
-      'watch_time_synced': 'Watch time synchronized',
+       'watch_time_synced': 'Watch time synchronized',
+       'error_syncing_time': 'Error syncing time',
       
       // App Safety Config
       'system_permissions': 'SYSTEM PERMISSIONS',
@@ -159,7 +160,8 @@ class AppLocalizations {
       'enable_watch_sos': 'Uključi SOS sa Sata',
       'sos_number': 'SOS Broj',
       'set_time_on_watch': 'Podesi Vreme na Satu',
-      'watch_time_synced': 'Vreme na satu je sinhronizovano',
+       'watch_time_synced': 'Vreme na satu je sinhronizovano',
+       'error_syncing_time': 'Greška pri sinhronizaciji vremena',
 
       // App Safety Config
       'system_permissions': 'SISTEMSKE DOZVOLE',

@@ -61,7 +61,7 @@ class SensorProvider with ChangeNotifier {
   double _watchStillTol = 0.2;
   double _watchAngleThr = 60.0;
   int _watchStillDur = 5000;
-  
+
   // New Watch-Specific Action/Network Settings
   bool _watchWifiEnabled = false;
   String _watchWifiSsid = "";
@@ -117,7 +117,7 @@ class SensorProvider with ChangeNotifier {
   double get watchStillTol => _watchStillTol;
   double get watchAngleThr => _watchAngleThr;
   int get watchStillDur => _watchStillDur;
-  
+
   bool get watchWifiEnabled => _watchWifiEnabled;
   String get watchWifiSsid => _watchWifiSsid;
   String get watchWifiPass => _watchWifiPass;
@@ -160,7 +160,11 @@ class SensorProvider with ChangeNotifier {
       } else {
         // Update status on disconnect
         if (_defaultDeviceAddress != null) {
-          FirebaseService.updateDeviceStatus(_defaultDeviceAddress!, false, _batteryLevel);
+          FirebaseService.updateDeviceStatus(
+            _defaultDeviceAddress!,
+            false,
+            _batteryLevel,
+          );
         }
       }
 
@@ -197,14 +201,14 @@ class SensorProvider with ChangeNotifier {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     _defaultDeviceAddress = prefs.getString('default_device_address');
-    
+
     // Multi-action loading
     _enableSms = prefs.getBool('enable_sms') ?? false;
     _smsNumbers = prefs.getStringList('sms_numbers') ?? [];
-    
+
     _enableCall = prefs.getBool('enable_call') ?? false;
     _callNumbers = prefs.getStringList('call_numbers') ?? [];
-    
+
     _enableSos = prefs.getBool('enable_sos') ?? false;
     _sosNumber = prefs.getString('sos_number') ?? "194";
 
@@ -224,7 +228,7 @@ class SensorProvider with ChangeNotifier {
     String? deviceAddress,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     if (enableSms != null) {
       _enableSms = enableSms;
       prefs.setBool('enable_sms', enableSms);
@@ -339,7 +343,7 @@ class SensorProvider with ChangeNotifier {
   // --- Watch Settings Sync Methods ---
   Future<void> readWatchSettings() async {
     if (!isConnected) return;
-    
+
     _isSyncingWatchSettings = true;
     notifyListeners();
 
@@ -349,23 +353,39 @@ class SensorProvider with ChangeNotifier {
         final jsonString = utf8.decode(data);
         final Map<String, dynamic> settings = jsonDecode(jsonString);
 
-        if (settings.containsKey('screen_timeout')) _watchScreenTimeoutMs = settings['screen_timeout'];
-        if (settings.containsKey('fall_low')) _watchFallLow = (settings['fall_low'] as num).toDouble();
-        if (settings.containsKey('fall_high')) _watchFallHigh = (settings['fall_high'] as num).toDouble();
-        if (settings.containsKey('still_tol')) _watchStillTol = (settings['still_tol'] as num).toDouble();
-        if (settings.containsKey('angle_thr')) _watchAngleThr = (settings['angle_thr'] as num).toDouble();
-        if (settings.containsKey('still_dur')) _watchStillDur = settings['still_dur'];
-        
-        if (settings.containsKey('wifi_en')) _watchWifiEnabled = settings['wifi_en'] == true;
-        if (settings.containsKey('wifi_ssid')) _watchWifiSsid = settings['wifi_ssid'] ?? "";
-        if (settings.containsKey('wifi_pass')) _watchWifiPass = settings['wifi_pass'] ?? "";
-        if (settings.containsKey('en_sms')) _watchEnableSms = settings['en_sms'] == true;
-        if (settings.containsKey('sms_nums')) _watchSmsNumbers = settings['sms_nums'] ?? "";
-        if (settings.containsKey('en_call')) _watchEnableCall = settings['en_call'] == true;
-        if (settings.containsKey('call_nums')) _watchCallNumbers = settings['call_nums'] ?? "";
-        if (settings.containsKey('en_sos')) _watchEnableSos = settings['en_sos'] == true;
-        if (settings.containsKey('sos_num')) _watchSosNumber = settings['sos_num'] ?? "";
-        if (settings.containsKey('act_orig')) _watchActionOrigin = settings['act_orig'] ?? 0;
+        if (settings.containsKey('screen_timeout'))
+          _watchScreenTimeoutMs = settings['screen_timeout'];
+        if (settings.containsKey('fall_low'))
+          _watchFallLow = (settings['fall_low'] as num).toDouble();
+        if (settings.containsKey('fall_high'))
+          _watchFallHigh = (settings['fall_high'] as num).toDouble();
+        if (settings.containsKey('still_tol'))
+          _watchStillTol = (settings['still_tol'] as num).toDouble();
+        if (settings.containsKey('angle_thr'))
+          _watchAngleThr = (settings['angle_thr'] as num).toDouble();
+        if (settings.containsKey('still_dur'))
+          _watchStillDur = settings['still_dur'];
+
+        if (settings.containsKey('wifi_en'))
+          _watchWifiEnabled = settings['wifi_en'] == true;
+        if (settings.containsKey('wifi_ssid'))
+          _watchWifiSsid = settings['wifi_ssid'] ?? "";
+        if (settings.containsKey('wifi_pass'))
+          _watchWifiPass = settings['wifi_pass'] ?? "";
+        if (settings.containsKey('en_sms'))
+          _watchEnableSms = settings['en_sms'] == true;
+        if (settings.containsKey('sms_nums'))
+          _watchSmsNumbers = settings['sms_nums'] ?? "";
+        if (settings.containsKey('en_call'))
+          _watchEnableCall = settings['en_call'] == true;
+        if (settings.containsKey('call_nums'))
+          _watchCallNumbers = settings['call_nums'] ?? "";
+        if (settings.containsKey('en_sos'))
+          _watchEnableSos = settings['en_sos'] == true;
+        if (settings.containsKey('sos_num'))
+          _watchSosNumber = settings['sos_num'] ?? "";
+        if (settings.containsKey('act_orig'))
+          _watchActionOrigin = settings['act_orig'] ?? 0;
       }
     } catch (e) {
       print("Failed to read watch settings: $e");
@@ -400,29 +420,35 @@ class SensorProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final Map<String, dynamic> settings = {
-        'screen_timeout': screenTimeoutMs ?? _watchScreenTimeoutMs,
-        'fall_low': fallLow ?? _watchFallLow,
-        'fall_high': fallHigh ?? _watchFallHigh,
-        'still_tol': stillTol ?? _watchStillTol,
-        'angle_thr': angleThr ?? _watchAngleThr,
-        'still_dur': stillDur ?? _watchStillDur,
-        'wifi_en': wifiEnabled ?? _watchWifiEnabled,
-        'wifi_ssid': wifiSsid ?? _watchWifiSsid,
-        'wifi_pass': wifiPass ?? _watchWifiPass,
-        'en_sms': enableSms ?? _watchEnableSms,
-        'sms_nums': smsNumbers ?? _watchSmsNumbers,
-        'en_call': enableCall ?? _watchEnableCall,
-        'call_nums': callNumbers ?? _watchCallNumbers,
-        'en_sos': enableSos ?? _watchEnableSos,
-        'sos_num': sosNumber ?? _watchSosNumber,
-        'act_orig': actionOrigin ?? _watchActionOrigin,
-        'sync_time': syncTime,
-      };
+      final Map<String, dynamic> settings = {};
+
+      if (screenTimeoutMs != null) settings['screen_timeout'] = screenTimeoutMs;
+      if (fallLow != null) settings['fall_low'] = fallLow;
+      if (fallHigh != null) settings['fall_high'] = fallHigh;
+      if (stillTol != null) settings['still_tol'] = stillTol;
+      if (angleThr != null) settings['angle_thr'] = angleThr;
+      if (stillDur != null) settings['still_dur'] = stillDur;
+      if (wifiEnabled != null) settings['wifi_en'] = wifiEnabled;
+      if (wifiSsid != null) settings['wifi_ssid'] = wifiSsid;
+      if (wifiPass != null) settings['wifi_pass'] = wifiPass;
+      if (enableSms != null) settings['en_sms'] = enableSms;
+      if (smsNumbers != null) settings['sms_nums'] = smsNumbers;
+      if (enableCall != null) settings['en_call'] = enableCall;
+      if (callNumbers != null) settings['call_nums'] = callNumbers;
+      if (enableSos != null) settings['en_sos'] = enableSos;
+      if (sosNumber != null) settings['sos_num'] = sosNumber;
+      if (actionOrigin != null) settings['act_orig'] = actionOrigin;
+      if (syncTime != null) settings['sync_time'] = syncTime;
+
+      if (settings.isEmpty) {
+        _isSyncingWatchSettings = false;
+        notifyListeners();
+        return true;
+      }
 
       final jsonString = jsonEncode(settings);
       final data = utf8.encode(jsonString);
-      
+
       bool success = await _bleService.writeCharacteristic(data);
       if (success) {
         // Update local state if successful
@@ -545,12 +571,12 @@ class SensorProvider with ChangeNotifier {
 
     // 1. Send SMS if enabled
     if (_enableSms && _smsNumbers.isNotEmpty) {
-      String googleMapsUrl = _fallLocation != null 
-          ? "https://maps.google.com/?q=${_fallLocation?.latitude},${_fallLocation?.longitude}" 
+      String googleMapsUrl = _fallLocation != null
+          ? "https://maps.google.com/?q=${_fallLocation?.latitude},${_fallLocation?.longitude}"
           : "Location unavailable";
-          
+
       String message = "SOS! LifeLink detected a fall. $googleMapsUrl";
-      
+
       for (String number in _smsNumbers) {
         if (number.trim().isEmpty) continue;
         final Uri smsLaunchUri = Uri(
@@ -576,13 +602,13 @@ class SensorProvider with ChangeNotifier {
         try {
           // Direct call (no user confirmation required once permission granted)
           await FlutterPhoneDirectCaller.callNumber(number);
-          
+
           // Note: detection of "answered" vs "not answered" requires native telephony listeners.
           // In Flutter, we could wait some time or check call logs (if permitted),
           // but for now we initiate the protocol.
-          
+
           // Wait briefly before trying next (if dialer was closed or failed)
-          await Future.delayed(const Duration(seconds: 15)); 
+          await Future.delayed(const Duration(seconds: 15));
         } catch (e) {
           print("Call error for $number: $e");
         }
@@ -591,10 +617,7 @@ class SensorProvider with ChangeNotifier {
 
     // 3. SOS Call if enabled
     if (_enableSos && _sosNumber.isNotEmpty) {
-       final Uri launchUri = Uri(
-        scheme: 'tel',
-        path: _sosNumber,
-      );
+      final Uri launchUri = Uri(scheme: 'tel', path: _sosNumber);
       await launchUrl(launchUri);
     }
   }
@@ -716,7 +739,7 @@ class SensorProvider with ChangeNotifier {
     if (_lastFirebaseSnapshot == null ||
         now.difference(_lastFirebaseSnapshot!).inSeconds >= 30) {
       _lastFirebaseSnapshot = now;
-      
+
       FirebaseService.saveHealthSnapshot(
         deviceId: connectedDeviceAddress!,
         pulse: _pulse,
