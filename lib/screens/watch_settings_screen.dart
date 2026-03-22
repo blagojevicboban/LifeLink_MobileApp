@@ -277,7 +277,7 @@ class _WatchSettingsScreenState extends State<WatchSettingsScreen> {
                   ),
 
                 const SizedBox(height: 24),
-                _buildCardHeader(AppLocalizations.of(context)!.get('set_watch_time')),
+                _buildCardHeader(AppLocalizations.of(context)!.get('set_time_on_watch')),
                 ElevatedButton.icon(
                   onPressed: () {
                     // Get current time in YYYY-MM-DD HH:MM:SS format
@@ -297,7 +297,7 @@ class _WatchSettingsScreenState extends State<WatchSettingsScreen> {
                     );
                   },
                   icon: const Icon(Icons.access_time, color: Colors.white),
-                  label: Text(AppLocalizations.of(context)!.get('set_watch_time'), style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16)),
+                  label: Text(AppLocalizations.of(context)!.get('set_time_on_watch'), style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueGrey.withOpacity(0.3),
                     padding: const EdgeInsets.symmetric(vertical: 16),

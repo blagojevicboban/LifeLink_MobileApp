@@ -75,7 +75,7 @@ class AppLocalizations {
       'call_numbers': 'Call Numbers (comma separated)',
       'enable_watch_sos': 'Enable Watch SOS',
       'sos_number': 'SOS Number',
-      'set_watch_time': 'Set Watch Time',
+      'set_time_on_watch': 'Set Watch Time',
       'watch_time_synced': 'Watch time synchronized',
       
       // App Safety Config
@@ -157,9 +157,9 @@ class AppLocalizations {
       'enable_watch_call': 'Uključi Poziv sa Sata',
       'call_numbers': 'Brojevi za Poziv (odvojeni zarezom)',
       'enable_watch_sos': 'Uključi SOS sa Sata',
-        'sos_number': 'SOS Broj',
-        'set_watch_time': 'Podesi Vreme na Satu',
-        'watch_time_synced': 'Vreme na satu je sinhronizovano',
+      'sos_number': 'SOS Broj',
+      'set_time_on_watch': 'Podesi Vreme na Satu',
+      'watch_time_synced': 'Vreme na satu je sinhronizovano',
 
       // App Safety Config
       'system_permissions': 'SISTEMSKE DOZVOLE',
