@@ -66,6 +66,11 @@ class HelpScreen extends StatelessWidget {
                   : "Your data is automatically saved in the cloud. Even if you are not near your phone, the watch can use WiFi to send real-time information to your family.",
               Icons.cloud_sync,
             ),
+            _buildSection(
+              loc.get('cloud_monitoring'),
+              "${loc.get('cloud_monitoring_desc')}\n\n${loc.get('visit_dashboard')}\n${loc.get('dashboard_url')}",
+              Icons.dashboard_customize_outlined,
+            ),
             const SizedBox(height: 40),
             Center(
               child: Text(

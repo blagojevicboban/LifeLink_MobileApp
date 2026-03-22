@@ -95,6 +95,10 @@ class AppLocalizations {
       'sos_number_hint': 'SOS Number (e.g. 194)',
       'countdown_timer': 'COUNTDOWN TIMER',
       'sec': 'sec',
+      'cloud_monitoring': 'Cloud Monitoring',
+      'cloud_monitoring_desc': 'View your health metrics and fall history in real-time from anywhere in the world.',
+      'visit_dashboard': 'Visit Dashboard:',
+      'dashboard_url': 'https://lifelink.tsp.edu.rs/dashboard/',
     },
     'sr': {
       // Main / Dashboard Strings
@@ -179,6 +183,10 @@ class AppLocalizations {
       'sos_number_hint': 'SOS Broj (npr. 194)',
       'countdown_timer': 'ODBROJAVANJE',
       'sec': 'sek',
+      'cloud_monitoring': 'Cloud Praćenje',
+      'cloud_monitoring_desc': 'Pratite vaše vitalne funkcije i istoriju padova u realnom vremenu sa bilo kog mesta na svetu.',
+      'visit_dashboard': 'Posetite Dashboard:',
+      'dashboard_url': 'https://lifelink.tsp.edu.rs/dashboard/',
     }
   };
 
