@@ -36,13 +36,15 @@ class FirebaseService {
     required double gForce,
     required int battery,
     required String source, // 'ble' or 'wifi'
+    double? lat,
+    double? lon,
   }) async {
     try {
       final batch = _firestore.batch();
       
       // Update main device document
       final deviceRef = _firestore.collection('devices').doc(deviceId);
-      batch.set(deviceRef, {
+      Map<String, dynamic> deviceUpdate = {
         'pulse': pulse,
         'spo2': spo2,
         'gForce': gForce,
@@ -50,18 +52,26 @@ class FirebaseService {
         'lastSeen': FieldValue.serverTimestamp(),
         'isOnline': true,
         'uploadSource': source,
-      }, SetOptions(merge: true));
+      };
+      if (lat != null) deviceUpdate['lat'] = lat;
+      if (lon != null) deviceUpdate['lon'] = lon;
+      
+      batch.set(deviceRef, deviceUpdate, SetOptions(merge: true));
 
       // Add to history
       final snapshotRef = deviceRef.collection('health_snapshots').doc();
-      batch.set(snapshotRef, {
+      Map<String, dynamic> snapshotData = {
         'timestamp': FieldValue.serverTimestamp(),
         'pulse': pulse,
         'spo2': spo2,
         'gForce': gForce,
         'battery': battery,
         'source': source,
-      });
+      };
+      if (lat != null) snapshotData['lat'] = lat;
+      if (lon != null) snapshotData['lon'] = lon;
+      
+      batch.set(snapshotRef, snapshotData);
 
       await batch.commit();
     } catch (e) {
@@ -107,6 +117,23 @@ class FirebaseService {
     } catch (e) {
       // Might fail if device doc doesn't exist yet, but registration handles that
       print("Firebase status update error: $e");
+    }
+  }
+
+  /// Updates phone's current location in Firestore
+  static Future<void> updatePhoneLocation({
+    required String deviceId,
+    required double lat,
+    required double lon,
+  }) async {
+    try {
+      await _firestore.collection('devices').doc(deviceId).update({
+        'phoneLat': lat,
+        'phoneLon': lon,
+        'phoneLastSeen': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Firebase phone location update error: $e");
     }
   }
 }

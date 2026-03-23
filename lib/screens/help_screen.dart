@@ -67,6 +67,13 @@ class HelpScreen extends StatelessWidget {
               Icons.cloud_sync,
             ),
             _buildSection(
+              isSerbian ? "Live Mapa" : "Live Map",
+              isSerbian
+                  ? "Aplikacija u realnom vremenu prati lokaciju i vašeg telefona i sata. Ovo pomaže spasiocima da vas brže pronađu u hitnim slučajevima."
+                  : "The app tracks the real-time location of both your phone and the watch. This helps responders find you much faster in emergencies.",
+              Icons.map_outlined,
+            ),
+            _buildSection(
               loc.get('cloud_monitoring'),
               "${loc.get('cloud_monitoring_desc')}\n\n${loc.get('visit_dashboard')}\n${loc.get('dashboard_url')}",
               Icons.dashboard_customize_outlined,

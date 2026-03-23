@@ -196,6 +196,31 @@ class SensorProvider with ChangeNotifier {
       _debugStatus = "Init: No default.";
       notifyListeners();
     }
+    
+    // Start periodic phone location sync (every 5 mins)
+    Timer.periodic(const Duration(minutes: 5), (timer) {
+      if (_defaultDeviceAddress != null) {
+        _syncPhoneLocationToFirebase();
+      }
+    });
+  }
+
+  Future<void> _syncPhoneLocationToFirebase() async {
+    if (_defaultDeviceAddress == null) return;
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 10),
+      );
+      await FirebaseService.updatePhoneLocation(
+        deviceId: _defaultDeviceAddress!,
+        lat: position.latitude,
+        lon: position.longitude,
+      );
+      print("Synced phone location to Firebase: ${position.latitude}, ${position.longitude}");
+    } catch (e) {
+      print("Failed to sync phone location: $e");
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -747,6 +772,8 @@ class SensorProvider with ChangeNotifier {
         gForce: _gForce,
         battery: _batteryLevel,
         source: 'ble',
+        lat: _fallLocation?.latitude,
+        lon: _fallLocation?.longitude,
       );
     }
   }
