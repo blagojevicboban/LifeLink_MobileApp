@@ -13,7 +13,7 @@ import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 
 import 'package:android_intent_plus/android_intent.dart';
 import '../services/ble_service.dart';
-import '../services/firebase_service.dart';
+import '../services/api_service.dart';
 
 enum AlertState { safe, warning, alarm }
 
@@ -150,7 +150,7 @@ class SensorProvider with ChangeNotifier {
         stopScan();
         // Register/update device on connect
         if (connectedDeviceAddress != null) {
-          FirebaseService.registerDevice(
+          ApiService.registerDevice(
             deviceId: connectedDeviceAddress!,
             deviceName: connectedDeviceName,
             battery: _batteryLevel,
@@ -160,7 +160,7 @@ class SensorProvider with ChangeNotifier {
       } else {
         // Update status on disconnect
         if (_defaultDeviceAddress != null) {
-          FirebaseService.updateDeviceStatus(
+          ApiService.updateDeviceStatus(
             _defaultDeviceAddress!,
             false,
             _batteryLevel,
@@ -200,24 +200,24 @@ class SensorProvider with ChangeNotifier {
     // Start periodic phone location sync (every 5 mins)
     Timer.periodic(const Duration(minutes: 5), (timer) {
       if (_defaultDeviceAddress != null) {
-        _syncPhoneLocationToFirebase();
+        _syncPhoneLocationToApi();
       }
     });
   }
 
-  Future<void> _syncPhoneLocationToFirebase() async {
+  Future<void> _syncPhoneLocationToApi() async {
     if (_defaultDeviceAddress == null) return;
     try {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
         timeLimit: const Duration(seconds: 10),
       );
-      await FirebaseService.updatePhoneLocation(
+      await ApiService.updatePhoneLocation(
         deviceId: _defaultDeviceAddress!,
         lat: position.latitude,
         lon: position.longitude,
       );
-      print("Synced phone location to Firebase: ${position.latitude}, ${position.longitude}");
+      print("Synced phone location to MariaDB: ${position.latitude}, ${position.longitude}");
     } catch (e) {
       print("Failed to sync phone location: $e");
     }
@@ -542,13 +542,13 @@ class SensorProvider with ChangeNotifier {
         _extractMetrics(msg);
       } else if (msg.startsWith("STATUS")) {
         _extractMetrics(msg);
-        _syncToFirebase();
+        _syncToApi();
       }
 
       // Always log falls to Firebase immediately
       if (msg.startsWith("FALL_DETECTED") || msg.startsWith("FALL_ACCEPTED")) {
         if (connectedDeviceAddress != null) {
-          FirebaseService.saveFallEvent(
+          ApiService.saveFallEvent(
             deviceId: connectedDeviceAddress!,
             location: _fallLocation,
             gForce: _gForce,
@@ -753,7 +753,7 @@ class SensorProvider with ChangeNotifier {
     }
   }
 
-  void _syncToFirebase() {
+  void _syncToApi() {
     if (!_isConnected || connectedDeviceAddress == null) return;
 
     // If watch has WiFi enabled, it should send its own snapshots.
@@ -765,7 +765,7 @@ class SensorProvider with ChangeNotifier {
         now.difference(_lastFirebaseSnapshot!).inSeconds >= 30) {
       _lastFirebaseSnapshot = now;
 
-      FirebaseService.saveHealthSnapshot(
+      ApiService.saveHealthSnapshot(
         deviceId: connectedDeviceAddress!,
         pulse: _pulse,
         spo2: _spo2,
