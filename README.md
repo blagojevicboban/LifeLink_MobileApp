@@ -6,9 +6,10 @@ LifeLink is a Flutter-based companion application designed to work seamlessly wi
 
 ### 📡 Real-Time Monitoring
 - **Live Metrics**: Displays real-time Heart Rate (BPM), Blood Oxygen (SpO2), and Impact G-Force.
-- **BLE Connectivity**: Low-latency Bluetooth Low Energy (BLE) connection to the LifeLink ESP32 wearable.
+- **BLE Connectivity**: Low-latency Bluetooth Low Energy (BLE) connection. **Automatic Bluetooth activation** on Android devices for seamless pairing.
 - **Live Maps**: Integrated map view showing real-time location for both the watch and the mobile device.
 - **Connection Status**: Instant feedback on connection state and device battery level.
+- **Current Version**: **1.0.1+2** (March 2026 Release).
 
 ### 🛡️ Advanced Fall Detection
 - **3-Stage Logic**: Intelligent detection system tracks states: **Safe** → **Warning** (Potential Fall) → **Alarm** (Fall Confirmed).
