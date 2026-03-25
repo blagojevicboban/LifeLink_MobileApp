@@ -1,20 +1,43 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Service to handle dual-writing to both Firebase Firestore and local MariaDB API
 class FirebaseService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Placeholder URL - User should update to their server IP
+  static const String _baseUrl = "http://192.168.1.100/api/update.php";
 
   static Future<void> initialize() async {
-    // Firebase.initializeApp() should be called in main.dart
+    // Firebase is initialized in main.dart
   }
 
-  /// Registers or updates device info in Firestore
+  /// Registers or updates device info in BOTH MariaDB and Firestore
   static Future<void> registerDevice({
     required String deviceId,
     required String deviceName,
     required int battery,
     required bool isOnline,
   }) async {
+    // 1. MariaDB Update
+    try {
+      await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'device_id': deviceId,
+          'name': deviceName,
+          'battery': battery,
+          'isOnline': isOnline ? 1 : 0,
+          'source': 'mobile_app',
+        }),
+      );
+    } catch (e) {
+      print("API record error: $e");
+    }
+
+    // 2. Firebase Update
     try {
       await _firestore.collection('devices').doc(deviceId).set({
         'name': deviceName,
@@ -28,22 +51,42 @@ class FirebaseService {
     }
   }
 
-  /// Updates health data snapshot for a device
+  /// Updates health data snapshot in BOTH MariaDB and Firestore
   static Future<void> saveHealthSnapshot({
     required String deviceId,
     required int pulse,
     required int spo2,
     required double gForce,
     required int battery,
-    required String source, // 'ble' or 'wifi'
+    required String source,
     double? lat,
     double? lon,
   }) async {
+    // 1. MariaDB Update
+    try {
+      await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'device_id': deviceId,
+          'pulse': pulse,
+          'spo2': spo2,
+          'gForce': gForce,
+          'battery': battery,
+          'source': source,
+          if (lat != null) 'lat': lat,
+          if (lon != null) 'lon': lon,
+        }),
+      );
+    } catch (e) {
+      print("API health save error: $e");
+    }
+
+    // 2. Firebase Update
     try {
       final batch = _firestore.batch();
-      
-      // Update main device document
       final deviceRef = _firestore.collection('devices').doc(deviceId);
+      
       Map<String, dynamic> deviceUpdate = {
         'pulse': pulse,
         'spo2': spo2,
@@ -58,7 +101,6 @@ class FirebaseService {
       
       batch.set(deviceRef, deviceUpdate, SetOptions(merge: true));
 
-      // Add to history
       final snapshotRef = deviceRef.collection('health_snapshots').doc();
       Map<String, dynamic> snapshotData = {
         'timestamp': FieldValue.serverTimestamp(),
@@ -72,14 +114,13 @@ class FirebaseService {
       if (lon != null) snapshotData['lon'] = lon;
       
       batch.set(snapshotRef, snapshotData);
-
       await batch.commit();
     } catch (e) {
       print("Firebase health save error: $e");
     }
   }
 
-  /// Logs a fall event
+  /// Logs a fall event in BOTH MariaDB and Firestore
   static Future<void> saveFallEvent({
     required String deviceId,
     required LatLng? location,
@@ -87,12 +128,28 @@ class FirebaseService {
     required int pulse,
     required int spo2,
   }) async {
+    // 1. MariaDB Update
     try {
-      await _firestore
-          .collection('devices')
-          .doc(deviceId)
-          .collection('fall_events')
-          .add({
+      await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'device_id': deviceId,
+          'is_fall': true,
+          'gForce': gForce,
+          'pulse': pulse,
+          'spo2': spo2,
+          if (location != null) 'lat': location.latitude,
+          if (location != null) 'lon': location.longitude,
+        }),
+      );
+    } catch (e) {
+      print("API fall alert error: $e");
+    }
+
+    // 2. Firebase Update
+    try {
+      await _firestore.collection('devices').doc(deviceId).collection('fall_events').add({
         'timestamp': FieldValue.serverTimestamp(),
         'lat': location?.latitude,
         'lon': location?.longitude,
@@ -102,12 +159,28 @@ class FirebaseService {
         'resolved': false,
       });
     } catch (e) {
-      print("Firebase fall alert save error: $e");
+      print("Firebase fall save error: $e");
     }
   }
 
-  /// Updates connection status
+  /// Updates connection status in BOTH MariaDB and Firestore
   static Future<void> updateDeviceStatus(String deviceId, bool isOnline, int battery) async {
+    // 1. MariaDB
+    try {
+      await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'device_id': deviceId,
+          'isOnline': isOnline ? 1 : 0,
+          'battery': battery,
+        }),
+      );
+    } catch (e) {
+      print("API status error: $e");
+    }
+
+    // 2. Firebase
     try {
       await _firestore.collection('devices').doc(deviceId).update({
         'isOnline': isOnline,
@@ -115,17 +188,33 @@ class FirebaseService {
         'lastSeen': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      // Might fail if device doc doesn't exist yet, but registration handles that
-      print("Firebase status update error: $e");
+      print("Firebase status error: $e");
     }
   }
 
-  /// Updates phone's current location in Firestore
+  /// Updates phone's current location in BOTH MariaDB and Firestore
   static Future<void> updatePhoneLocation({
     required String deviceId,
     required double lat,
     required double lon,
   }) async {
+    // 1. MariaDB
+    try {
+      await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'device_id': deviceId,
+          'lat': lat,
+          'lon': lon,
+          'source': 'mobile_phone_gps',
+        }),
+      );
+    } catch (e) {
+      print("API location error: $e");
+    }
+
+    // 2. Firebase
     try {
       await _firestore.collection('devices').doc(deviceId).update({
         'phoneLat': lat,
@@ -133,7 +222,7 @@ class FirebaseService {
         'phoneLastSeen': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      print("Firebase phone location update error: $e");
+      print("Firebase location error: $e");
     }
   }
 }
