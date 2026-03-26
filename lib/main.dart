@@ -9,8 +9,7 @@ import 'screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Removed Firebase initialization
-  // await Firebase.initializeApp();
+  // Removed old Firebase initialization as system now uses MariaDB
   runApp(const LifeLinkApp());
 }
 

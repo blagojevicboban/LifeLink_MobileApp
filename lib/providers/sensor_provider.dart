@@ -75,7 +75,7 @@ class SensorProvider with ChangeNotifier {
   int _watchActionOrigin = 0; // 0: Watch Only, 1: App + Watch
 
   bool _isSyncingWatchSettings = false;
-  DateTime? _lastFirebaseSnapshot;
+  DateTime? _lastSyncTime;
 
   AlertState get alertState => _alertState;
   String get rawMessage => _rawMessage;
@@ -545,7 +545,7 @@ class SensorProvider with ChangeNotifier {
         _syncToApi();
       }
 
-      // Always log falls to Firebase immediately
+      // Always log falls to the server immediately
       if (msg.startsWith("FALL_DETECTED") || msg.startsWith("FALL_ACCEPTED")) {
         if (connectedDeviceAddress != null) {
           ApiService.saveFallEvent(
@@ -761,9 +761,9 @@ class SensorProvider with ChangeNotifier {
     if (_watchWifiEnabled) return;
 
     final now = DateTime.now();
-    if (_lastFirebaseSnapshot == null ||
-        now.difference(_lastFirebaseSnapshot!).inSeconds >= 30) {
-      _lastFirebaseSnapshot = now;
+    if (_lastSyncTime == null ||
+        now.difference(_lastSyncTime!).inSeconds >= 30) {
+      _lastSyncTime = now;
 
       ApiService.saveHealthSnapshot(
         deviceId: connectedDeviceAddress!,
