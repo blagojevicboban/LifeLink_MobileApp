@@ -76,6 +76,7 @@ class SensorProvider with ChangeNotifier {
 
   bool _isSyncingWatchSettings = false;
   DateTime? _lastSyncTime;
+  DateTime? _lastPhoneLocationTime;
 
   AlertState get alertState => _alertState;
   String get rawMessage => _rawMessage;
@@ -197,8 +198,8 @@ class SensorProvider with ChangeNotifier {
       notifyListeners();
     }
     
-    // Start periodic phone location sync (every 5 mins)
-    Timer.periodic(const Duration(minutes: 5), (timer) {
+    // Start periodic phone location sync (every 1 min)
+    Timer.periodic(const Duration(minutes: 1), (timer) {
       if (_defaultDeviceAddress != null) {
         _syncPhoneLocationToApi();
       }
@@ -686,10 +687,11 @@ class SensorProvider with ChangeNotifier {
       double lon = double.tryParse(lonMatch.group(1)!) ?? 0.0;
       if (lat != 0.0 || lon != 0.0) {
         _fallLocation = LatLng(lat, lon);
-      } else if (_alertState == AlertState.alarm) {
+      } else {
+        // Watch GPS is 0,0 or null. Fetch phone location periodically.
         _fetchPhoneLocation();
       }
-    } else if (_alertState == AlertState.alarm && _fallLocation == null) {
+    } else {
       _fetchPhoneLocation();
     }
 
@@ -710,6 +712,11 @@ class SensorProvider with ChangeNotifier {
   }
 
   Future<void> _fetchPhoneLocation() async {
+    final now = DateTime.now();
+    if (_lastPhoneLocationTime != null && 
+        now.difference(_lastPhoneLocationTime!).inSeconds < 120) return;
+        
+    _lastPhoneLocationTime = now;
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -757,8 +764,8 @@ class SensorProvider with ChangeNotifier {
     if (!_isConnected || connectedDeviceAddress == null) return;
 
     // If watch has WiFi enabled, it should send its own snapshots.
-    // We only send from app if WiFi is disabled OR as a less frequent backup.
-    if (_watchWifiEnabled) return;
+    // We send from app regardless as a reliable redundant path.
+    // if (_watchWifiEnabled) return;
 
     final now = DateTime.now();
     if (_lastSyncTime == null ||
