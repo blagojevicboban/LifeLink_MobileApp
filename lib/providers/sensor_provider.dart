@@ -142,8 +142,24 @@ class SensorProvider with ChangeNotifier {
     await _loadSettings();
     await _bleService.init(); // Wait for permissions
 
-    // Listen to connection state
-    // Listen to connection state
+    // 1. Monitor Bluetooth state and turn it back on if disabled
+    FlutterBluePlus.adapterState.listen((state) {
+      if (state == BluetoothAdapterState.off) {
+        _bleService.log("Bluetooth turned OFF! Attempting to re-enable...");
+        _ensureBluetoothOn();
+      }
+      notifyListeners();
+    });
+
+    // 2. Monitor Location service status
+    Geolocator.getServiceStatusStream().listen((status) {
+      if (status == ServiceStatus.disabled) {
+        _bleService.log("Location services disabled! May affect BLE connectivity.");
+      }
+      notifyListeners();
+    });
+
+    // 3. Listen to connection state
     _bleService.connectionStateStream.listen((state) {
       _isConnected = (state == BluetoothConnectionState.connected);
 
@@ -166,6 +182,10 @@ class SensorProvider with ChangeNotifier {
             false,
             _batteryLevel,
           );
+          
+          // CRITICAL: Auto-reconnect if it's the saved device
+          _bleService.log("Disconnected from watch. Triggering auto-reconnect...");
+          startScan(isAutoConnect: true);
         }
       }
 
@@ -186,9 +206,9 @@ class SensorProvider with ChangeNotifier {
       notifyListeners();
     });
 
-    // Attempt Auto-Connect
+    // Attempt Initial Auto-Connect
     if (_defaultDeviceAddress != null && _defaultDeviceAddress!.isNotEmpty) {
-      _debugStatus = "Init: Waiting 1s...";
+      _debugStatus = "Init: Scanning...";
       notifyListeners();
       // Small delay to ensure BLE stack is ready
       await Future.delayed(const Duration(seconds: 1));
@@ -197,6 +217,14 @@ class SensorProvider with ChangeNotifier {
       _debugStatus = "Init: No default.";
       notifyListeners();
     }
+    
+    // 4. Periodic check to ensure we are connecting if a default device exists
+    Timer.periodic(const Duration(minutes: 5), (timer) {
+      if (!_isConnected && _defaultDeviceAddress != null && !_isScanning) {
+        _bleService.log("Periodic Check: Not connected, triggering auto-reconnect...");
+        startScan(isAutoConnect: true);
+      }
+    });
     
     // Start periodic phone location sync (every 1 min)
     Timer.periodic(const Duration(minutes: 1), (timer) {
@@ -302,23 +330,48 @@ class SensorProvider with ChangeNotifier {
   }
 
   Future<void> _ensureBluetoothOn() async {
-    if (Platform.isAndroid) {
-      try {
-        final state = await FlutterBluePlus.adapterState.first;
-        if (state == BluetoothAdapterState.off) {
+    try {
+      // Check Bluetooth
+      final state = await FlutterBluePlus.adapterState.first;
+      if (state == BluetoothAdapterState.off) {
+        _bleService.log("Turning on BluetoothAdapter...");
+        if (Platform.isAndroid) {
           await FlutterBluePlus.turnOn();
           // Wait briefly for the adapter to fully initialize
           await Future.delayed(const Duration(seconds: 1));
+        } else {
+          _bleService.log("Manual BT activation required for this platform.");
+          await openBluetoothSettings();
         }
-      } catch (e) {
-        print("Could not turn on Bluetooth automatically: $e");
-        await openBluetoothSettings();
       }
+
+      // Check Location (Required for scanning on many Android versions)
+      bool locationEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!locationEnabled) {
+        _bleService.log("Location services disabled! Opening settings...");
+        await openLocationSettings();
+      }
+    } catch (e) {
+      _bleService.log("Could not manage wireless services automatically: $e");
     }
   }
 
   Future<void> startScan({bool isAutoConnect = false}) async {
     await _ensureBluetoothOn();
+    
+    // Check if we are already connected to the default device
+    if (isAutoConnect && _defaultDeviceAddress != null) {
+      for (var d in FlutterBluePlus.connectedDevices) {
+        if (d.remoteId.toString().toLowerCase() == _defaultDeviceAddress?.toLowerCase()) {
+          _bleService.log("Already connected to default: ${d.platformName}");
+          connect(d, autoConnect: true);
+          return;
+        }
+      }
+    }
+
+    if (_isScanning) return; // Prevent multiple scans
+
     _isScanning = true;
     _scanResults = [];
     notifyListeners();
@@ -328,38 +381,26 @@ class SensorProvider with ChangeNotifier {
       _debugStatus = "Auto: Start $_defaultDeviceAddress";
       notifyListeners();
 
-      try {
-        for (var d in FlutterBluePlus.connectedDevices) {
-          if (d.remoteId.toString() == _defaultDeviceAddress) {
-            _debugStatus = "Auto: System Connected!";
-            notifyListeners();
-            connect(d);
-            return;
-          }
-        }
-      } catch (e) {
-        _debugStatus = "Auto: Sys Check Error";
-      }
-
       StreamSubscription? sub;
       sub = _bleService.scanResultsStream.listen((results) {
         for (var r in results) {
-          // Case-insensitive check
           if (r.device.remoteId.toString().toLowerCase() ==
               _defaultDeviceAddress?.toLowerCase()) {
-            _bleService.log("Auto: Found! Connecting...");
+            _bleService.log("Auto: Found! Connecting (with autoConnect: true)...");
             notifyListeners();
-            connect(r.device);
+            connect(r.device, autoConnect: true);
             sub?.cancel();
             break;
           }
         }
       });
 
-      Future.delayed(const Duration(seconds: 10), () {
+      // Long timeout for auto-connect (30s) or until found
+      Future.delayed(const Duration(seconds: 30), () {
         sub?.cancel();
         if (!_isConnected && isAutoConnect) {
-          _bleService.log("Auto: Timeout. Not found.");
+          _bleService.log("Auto: Initial scan timeout. Will retry on next scan cycle.");
+          _isScanning = false;
           notifyListeners();
         }
       });
@@ -511,8 +552,8 @@ class SensorProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void connect(BluetoothDevice device) async {
-    await _bleService.connectToDevice(device);
+  void connect(BluetoothDevice device, {bool autoConnect = false}) async {
+    await _bleService.connectToDevice(device, autoConnect: autoConnect);
   }
 
   void disconnect() {

@@ -66,8 +66,8 @@ class BleService {
     await FlutterBluePlus.stopScan();
   }
 
-  Future<void> connectToDevice(BluetoothDevice device) async {
-    print("Connecting to ${device.platformName}...");
+  Future<void> connectToDevice(BluetoothDevice device, {bool autoConnect = false}) async {
+    print("Connecting to ${device.platformName} (autoConnect: $autoConnect)...");
 
     // Stop scanning before connecting
     await stopScan();
@@ -85,8 +85,8 @@ class BleService {
     });
 
     try {
-      // autoConnect: false forces immediate connection attempt
-      await device.connect(autoConnect: false);
+      // autoConnect: true allows the OS to reconnect whenever the device is in range
+      await device.connect(autoConnect: autoConnect, timeout: const Duration(seconds: 15));
       
       // Negotiate larger MTU for JSON data transfer (esp32 supports up to 512, 256 is safe)
       try {
